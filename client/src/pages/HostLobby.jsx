@@ -1,33 +1,42 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import colors from "../theme";
+import { socket } from "../socket";
 
-const placeholderParticipants = [
-  "Player 1",
-  "Player 2",
-  "Player 3",
-  "Player 4",
-  "Player 5",
-];
-
-function generateRoomCode() {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ0123456789";
-  let code = "";
-  for (let i = 0; i < 6; i++) {
-    code += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return code;
-}
-
-export default function OrganizerLobby() {
+export default function HostLobby() {
   const navigate = useNavigate();
-  const [roomCode] = useState(generateRoomCode());
-  const [participants] = useState(placeholderParticipants);
+  const location = useLocation();
+  const quiz = location.state?.quiz;
+
+  const [roomCode, setRoomCode] = useState(null);
+  const [participants, setParticipants] = useState([]);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!quiz) {
+      navigate("/create-quiz", { replace: true });
+      return;
+    }
+
+    socket.emit("host:create_room", quiz, (res) => {
+      if (res?.ok) {
+        setRoomCode(res.roomCode);
+      } else {
+        setError(res?.error || "Could not create the room");
+      }
+    });
+
+    const handleParticipantsUpdate = (list) => setParticipants(list);
+    socket.on("room:participants_update", handleParticipantsUpdate);
+
+    return () => {
+      socket.off("room:participants_update", handleParticipantsUpdate);
+    };
+  }, []);
 
   const handleStartQuiz = () => {
-    console.log("Starting quiz for room", roomCode);
-    navigate("/quiz/active");
+    navigate("/quiz/active", { state: { roomCode, role: "host", shouldStart: true } });
   };
 
   return (
@@ -55,8 +64,13 @@ export default function OrganizerLobby() {
               color: colors.textWhite,
             }}
           >
-            {roomCode}
+            {roomCode || "------"}
           </div>
+          {error && (
+            <div style={{ fontSize: 12, color: colors.red, marginTop: 8 }}>
+              {error}
+            </div>
+          )}
         </div>
 
         <div
@@ -94,9 +108,14 @@ export default function OrganizerLobby() {
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {participants.map((name) => (
+            {participants.length === 0 && (
+              <span style={{ fontSize: 12, color: colors.textGray }}>
+                Waiting for players to join...
+              </span>
+            )}
+            {participants.map((p) => (
               <div
-                key={name}
+                key={p.id}
                 style={{ display: "flex", alignItems: "center", gap: 10 }}
               >
                 <div
@@ -108,14 +127,22 @@ export default function OrganizerLobby() {
                   }}
                 />
                 <span style={{ fontSize: 13, color: colors.textWhite }}>
-                  {name}
+                  {p.name}
                 </span>
               </div>
             ))}
           </div>
         </div>
 
-        <button onClick={handleStartQuiz} style={startButtonStyle}>
+        <button
+          onClick={handleStartQuiz}
+          disabled={!roomCode || participants.length === 0}
+          style={{
+            ...startButtonStyle,
+            opacity: !roomCode || participants.length === 0 ? 0.5 : 1,
+            cursor: !roomCode || participants.length === 0 ? "not-allowed" : "pointer",
+          }}
+        >
           Start Quiz
         </button>
       </div>

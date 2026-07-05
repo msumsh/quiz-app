@@ -2,15 +2,18 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import colors from "../theme";
+import { socket } from "../socket";
 
 const CODE_LENGTH = 6;
 
 export default function JoinQuiz() {
   const navigate = useNavigate();
   const [code, setCode] = useState("");
+  const [name, setName] = useState("");
   const [error, setError] = useState("");
+  const [isJoining, setIsJoining] = useState(false);
 
-  const handleChange = (e) => {
+  const handleCodeChange = (e) => {
     const value = e.target.value.toUpperCase().slice(0, CODE_LENGTH);
     setCode(value);
     setError("");
@@ -23,9 +26,20 @@ export default function JoinQuiz() {
       setError("Enter the full room code");
       return;
     }
+    if (!name.trim()) {
+      setError("Enter your name");
+      return;
+    }
 
-    console.log("Joining room", code);
-    navigate("/quiz/active");
+    setIsJoining(true);
+    socket.emit("player:join_room", { roomCode: code, name: name.trim() }, (res) => {
+      setIsJoining(false);
+      if (res?.ok) {
+        navigate("/quiz/active", { state: { roomCode: code, role: "participant" } });
+      } else {
+        setError(res?.error || "Could not join the room");
+      }
+    });
   };
 
   return (
@@ -60,7 +74,7 @@ export default function JoinQuiz() {
         >
           <input
             value={code}
-            onChange={handleChange}
+            onChange={handleCodeChange}
             placeholder={"-".repeat(CODE_LENGTH)}
             maxLength={CODE_LENGTH}
             style={{
@@ -78,12 +92,30 @@ export default function JoinQuiz() {
             }}
           />
 
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Your name"
+            maxLength={20}
+            style={{
+              width: "100%",
+              textAlign: "center",
+              fontSize: 14,
+              backgroundColor: colors.bgInput,
+              border: `1px solid ${colors.borderInput}`,
+              borderRadius: 8,
+              padding: "10px 0",
+              color: colors.textWhite,
+              outline: "none",
+            }}
+          />
+
           {error && (
             <span style={{ fontSize: 12, color: colors.red }}>{error}</span>
           )}
 
-          <button type="submit" style={joinButtonStyle}>
-            Join
+          <button type="submit" disabled={isJoining} style={joinButtonStyle}>
+            {isJoining ? "Joining..." : "Join"}
           </button>
         </form>
       </div>

@@ -75,8 +75,9 @@ export default function CreateQuiz() {
 
   const handleNext = (e) => {
     e.preventDefault();
-    console.log("Quiz info", { title, category, numQuestions, timeLimit });
-    navigate("/create-quiz/questions");
+    navigate("/create-quiz/questions", {
+      state: { title, category, numQuestions, timeLimit },
+    });
   };
 
   return (

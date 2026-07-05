@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import colors from "../theme";
 
@@ -25,6 +25,13 @@ function makeBlankQuestion() {
 
 export default function QuestionEditor() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const quizMeta = location.state; 
+  
+  useEffect(() => {
+    if (!quizMeta) navigate("/create-quiz", { replace: true });
+  }, [quizMeta, navigate]);
+
   const [questions, setQuestions] = useState([makeBlankQuestion()]);
   const [activeId, setActiveId] = useState(questions[0].id);
 
@@ -75,8 +82,22 @@ export default function QuestionEditor() {
   };
 
   const handleFinish = () => {
-    console.log("Final quiz questions", questions);
-    navigate("/lobby");
+    const quiz = {
+      title: quizMeta.title,
+      category: quizMeta.category,
+      questions: questions.map((q) => ({
+        text: q.text,
+        type: q.type,
+        answerType: q.answerType,
+        options: q.options.map((opt) => opt.text),
+        correctOptionIndex: q.options.findIndex((opt) =>
+          q.correctOptionIds.includes(opt.id)
+        ),
+        timeLimitSeconds: quizMeta.timeLimit,
+      })),
+    };
+
+    navigate("/lobby", { state: { quiz } });
   };
 
   return (

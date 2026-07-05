@@ -1,22 +1,28 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import colors from "../theme";
 
-const results = [
-  { rank: 1, name: "Player 1", points: 78 },
-  { rank: 2, name: "Player 2", points: 67 },
-  { rank: 3, name: "Player 3", points: 59 },
-  { rank: 4, name: "Player 4", points: 43 },
+const demoResults = [
+  { name: "Player 1", score: 78 },
+  { name: "Player 2", score: 67 },
+  { name: "Player 3", score: 59 },
+  { name: "Player 4", score: 43 },
 ];
 
 const podiumHeight = { 1: 90, 2: 60, 3: 50 };
 
 export default function Leaderboard() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const leaderboard = location.state?.leaderboard || demoResults;
+  const results = leaderboard.map((player, index) => ({
+    ...player,
+    rank: index + 1,
+  }));
   const top3 = results.filter((r) => r.rank <= 3);
 
   const handleBackHome = () => {
-    console.log("Saving quiz to history");
     navigate("/home");
   };
 
@@ -121,7 +127,7 @@ export default function Leaderboard() {
                 </span>
               </div>
               <span style={{ fontSize: 13, color: colors.textGray }}>
-                {player.points} pts
+                {player.score} pts
               </span>
             </div>
           ))}
