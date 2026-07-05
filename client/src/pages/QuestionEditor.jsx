@@ -149,7 +149,7 @@ export default function QuestionEditor() {
               + Add
             </button>
             <button onClick={handleRemoveQuestion} style={removeButtonStyle}>
-              Remove
+              - Remove
             </button>
           </div>
         </div>
@@ -174,7 +174,7 @@ export default function QuestionEditor() {
           />
 
           {/* Text / Image toggle */}
-          <div style={{ display: "flex", gap: 8 }}>
+          <div style={switchContainerStyle}>
             <button
               onClick={() => updateActiveQuestion({ type: "text" })}
               style={typeButtonStyle(activeQuestion.type === "text")}
@@ -215,17 +215,7 @@ export default function QuestionEditor() {
 
           {/* Single Choice / Multiple Choice toggle */}
           <div>
-            <label
-              style={{
-                display: "block",
-                fontSize: 12,
-                color: colors.textGray,
-                marginBottom: 6,
-              }}
-            >
-              Answer Type
-            </label>
-            <div style={{ display: "flex", gap: 8 }}>
+            <div style={switchContainerStyle}>
               <button
                 onClick={() => handleAnswerTypeChange("single")}
                 style={typeButtonStyle(activeQuestion.answerType === "single")}
@@ -308,26 +298,27 @@ const inputStyle = {
 };
 
 const typeButtonStyle = (isActive) => ({
-  border: "none",
-  borderRadius: 6,
+  border: "none",                  
+  borderRadius: 16,                
   padding: "6px 16px",
   fontSize: 12,
   fontWeight: 600,
   cursor: "pointer",
-  backgroundColor: isActive ? colors.purple : colors.bgInput,
+  backgroundColor: isActive ? colors.purple : "transparent",
   color: isActive ? colors.textWhite : colors.textGray,
+  transition: "all 0.2s ease",
 });
 
 const addButtonStyle = {
   flex: 1,
-  border: "none",
+  border: `1px solid ${colors.green}`,
   borderRadius: 6,
   padding: "8px 0",
   fontSize: 12,
   fontWeight: 600,
   cursor: "pointer",
-  backgroundColor: colors.purple,
-  color: colors.textWhite,
+  backgroundColor: "transparent",
+  color: colors.green,
 };
 
 const removeButtonStyle = {
@@ -352,4 +343,12 @@ const submitButtonStyle = {
   fontSize: 14,
   fontWeight: 700,
   cursor: "pointer",
+};
+
+const switchContainerStyle = {
+  display: "flex",
+  backgroundColor: colors.bgInput, 
+  borderRadius: 20,                
+  padding: 0,                      
+  width: "fit-content",            
 };

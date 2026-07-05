@@ -37,7 +37,7 @@ export default function Navbar() {
             width: 28,
             height: 28,
             borderRadius: "50%",
-            backgroundColor: colors.purple,
+            backgroundColor: colors.purpleLight,
           }}
         />
         <button

@@ -1,6 +1,3 @@
-// Central place for the design's color palette.
-// Sampled directly from the Figma/design canvas so every page stays consistent.
-
 export const colors = {
   bgPage: "#0d0d0d",
   bgPanel: "#141420",
@@ -15,6 +12,8 @@ export const colors = {
 
   red: "#fb7575",
   redHover: "#e05555",
+
+  green: "#b2f1b4",
 
   textWhite: "#ffffff",
   textGray: "#9a9ab0",
