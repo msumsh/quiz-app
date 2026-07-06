@@ -132,6 +132,7 @@ app.use((err, req, res, next) => {
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: { origin: CLIENT_ORIGIN },
+  maxHttpBufferSize: 10 * 1024 * 1024,
 });
 
 io.use((socket, next) => {
@@ -203,7 +204,7 @@ io.on("connection", (socket) => {
 
     const room = getRoom(roomCode);
     if (!room || room.hostSocketId !== socket.id) return;
-    if (room.status !== "lobby") return
+    if (room.status !== "lobby") return;
 
     room.status = "active";
     room.currentQuestionIndex = -1;

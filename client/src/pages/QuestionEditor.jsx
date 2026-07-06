@@ -3,6 +3,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import colors from "../theme";
 
+const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+
 let nextQuestionId = 1;
 let nextOptionId = 1;
 
@@ -10,8 +12,9 @@ function makeBlankQuestion() {
   return {
     id: nextQuestionId++,
     text: "",
-    type: "text", 
-    image: null,
+    type: "text",
+    imageUrl: null,
+    imageName: "",
     answerType: "single",
     options: [
       { id: nextOptionId++, text: "" },
@@ -43,6 +46,24 @@ export default function QuestionEditor() {
     setQuestions((prev) =>
       prev.map((q) => (q.id === activeId ? { ...q, ...changes } : q))
     );
+  };
+
+  const handleImageSelect = (file) => {
+    if (!file) {
+      updateActiveQuestion({ imageUrl: null, imageName: "" });
+      return;
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      setError("Image is too large — please use one under 2MB");
+      return;
+    }
+    setError("");
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      updateActiveQuestion({ imageUrl: reader.result, imageName: file.name });
+    };
+    reader.readAsDataURL(file);
   };
 
   const updateOption = (optionId, text) => {
@@ -92,6 +113,12 @@ export default function QuestionEditor() {
         return;
       }
 
+      if (q.type === "image" && !q.imageUrl) {
+        setError(`Question ${index + 1} needs an image`);
+        setActiveId(q.id);
+        return;
+      }
+
       const filledOptions = q.options.filter((opt) => opt.text.trim());
       if (filledOptions.length < 2) {
         setError(`Question ${index + 1} needs at least 2 answer options filled in`);
@@ -121,6 +148,7 @@ export default function QuestionEditor() {
         return {
           text: q.text.trim(),
           type: q.type,
+          imageUrl: q.type === "image" ? q.imageUrl : null,
           answerType: q.answerType,
           options: filledOptions.map((opt) => opt.text.trim()),
           correctOptionIndexes,
@@ -145,6 +173,7 @@ export default function QuestionEditor() {
           margin: "0 auto",
         }}
       >
+        {/* Sidebar: question list */}
         <div
           style={{
             width: 220,
@@ -206,6 +235,7 @@ export default function QuestionEditor() {
           </div>
         </div>
 
+        {/* Question builder */}
         <div
           style={{
             flex: 1,
@@ -224,6 +254,7 @@ export default function QuestionEditor() {
             style={inputStyle}
           />
 
+          {/* Text / Image toggle */}
           <div style={switchContainerStyle}>
             <button
               onClick={() => updateActiveQuestion({ type: "text" })}
@@ -244,25 +275,32 @@ export default function QuestionEditor() {
               style={{
                 border: `1px dashed ${colors.borderInput}`,
                 borderRadius: 8,
-                padding: "40px 0",
+                padding: activeQuestion.imageUrl ? 12 : "40px 0",
                 textAlign: "center",
                 color: colors.textGray,
                 fontSize: 13,
                 cursor: "pointer",
               }}
             >
-              {activeQuestion.image ? activeQuestion.image.name : "Drop image here"}
+              {activeQuestion.imageUrl ? (
+                <img
+                  src={activeQuestion.imageUrl}
+                  alt={activeQuestion.imageName}
+                  style={{ maxWidth: "100%", maxHeight: 160, borderRadius: 6 }}
+                />
+              ) : (
+                "Drop image here"
+              )}
               <input
                 type="file"
                 accept="image/*"
-                onChange={(e) =>
-                  updateActiveQuestion({ image: e.target.files[0] || null })
-                }
+                onChange={(e) => handleImageSelect(e.target.files[0] || null)}
                 style={{ display: "none" }}
               />
             </label>
           )}
 
+          {/* Single Choice / Multiple Choice toggle */}
           <div>
             <div style={switchContainerStyle}>
               <button

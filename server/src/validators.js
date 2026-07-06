@@ -1,4 +1,6 @@
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const IMAGE_DATA_URL_REGEX = /^data:image\/(png|jpe?g|gif|webp);base64,/;
+const MAX_IMAGE_DATA_URL_LENGTH = 3_500_000;
 
 export function normalizeEmail(email) {
   return typeof email === "string" ? email.trim().toLowerCase() : "";
@@ -97,9 +99,23 @@ export function validateQuizPayload(quiz) {
       return { error: `Question ${index + 1} needs a time limit between 5 and 300 seconds` };
     }
 
+    const type = q.type === "image" ? "image" : "text";
+    let imageUrl = null;
+
+    if (type === "image") {
+      if (typeof q.imageUrl !== "string" || !IMAGE_DATA_URL_REGEX.test(q.imageUrl)) {
+        return { error: `Question ${index + 1} needs an image` };
+      }
+      if (q.imageUrl.length > MAX_IMAGE_DATA_URL_LENGTH) {
+        return { error: `Question ${index + 1} image is too large (max 2MB)` };
+      }
+      imageUrl = q.imageUrl;
+    }
+
     cleanedQuestions.push({
       text,
-      type: q.type === "image" ? "image" : "text",
+      type,
+      imageUrl,
       answerType,
       options,
       correctOptionIndexes,

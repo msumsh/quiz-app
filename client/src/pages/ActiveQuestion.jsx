@@ -137,6 +137,18 @@ export default function ActiveQuestion() {
           {question.text}
         </h1>
 
+        {question.type === "image" && question.imageUrl && (
+          <img
+            src={question.imageUrl}
+            alt=""
+            style={{
+              maxWidth: "100%",
+              maxHeight: 260,
+              borderRadius: 12,
+            }}
+          />
+        )}
+
         {isMultiple && role === "participant" && correctOptionIndexes === null && (
           <p style={{ fontSize: 12, color: colors.textGray }}>
             Select all that apply, then tap Submit
