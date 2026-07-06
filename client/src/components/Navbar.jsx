@@ -37,14 +37,6 @@ export default function Navbar() {
         {user && (
           <span style={{ fontSize: 13, color: colors.textGray }}>{user.name}</span>
         )}
-        <div
-          style={{
-            width: 28,
-            height: 28,
-            borderRadius: "50%",
-            backgroundColor: colors.purpleLight,
-          }}
-        />
         <button
           onClick={handleLogout}
           style={{
