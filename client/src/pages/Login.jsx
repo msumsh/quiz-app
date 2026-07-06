@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../AuthContext";
 
 const colors = {
   bgPage: "#0d0d0d",
@@ -10,6 +12,7 @@ const colors = {
   purpleLight: "#a78bfa",
   textWhite: "#ffffff",
   textGray: "#9a9ab0",
+  red: "#fb7575",
 };
 
 function Input({ label, id, type = "text", value, onChange, placeholder }) {
@@ -43,7 +46,11 @@ function Input({ label, id, type = "text", value, onChange, placeholder }) {
 }
 
 export default function Login() {
+  const navigate = useNavigate();
+  const { login, register } = useAuth();
   const [activeTab, setActiveTab] = useState("login");
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -53,24 +60,42 @@ export default function Login() {
   const [registerPassword, setRegisterPassword] = useState("");
   const [registerConfirm, setRegisterConfirm] = useState("");
 
-  const handleLoginSubmit = (e) => {
+  const handleLoginSubmit = async (e) => {
     e.preventDefault();
-    console.log("Login form submitted", { loginEmail, loginPassword });
+    setError("");
+    setIsSubmitting(true);
+    try {
+      await login(loginEmail, loginPassword);
+      navigate("/home");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleRegisterSubmit = (e) => {
+  const handleRegisterSubmit = async (e) => {
     e.preventDefault();
+    setError("");
 
     if (registerPassword !== registerConfirm) {
-      alert("Passwords do not match!");
+      setError("Passwords do not match!");
       return;
     }
 
-    console.log("Register form submitted", {
-      registerEmail,
-      registerUsername,
-      registerPassword,
-    });
+    setIsSubmitting(true);
+    try {
+      await register({
+        email: registerEmail,
+        password: registerPassword,
+        name: registerUsername,
+      });
+      navigate("/home");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const tabButtonStyle = (isActive) => ({
@@ -96,6 +121,7 @@ export default function Login() {
     fontSize: 14,
     fontWeight: 700,
     cursor: "pointer",
+    opacity: isSubmitting ? 0.7 : 1,
   };
 
   return (
@@ -147,18 +173,30 @@ export default function Login() {
           <button
             type="button"
             style={tabButtonStyle(activeTab === "login")}
-            onClick={() => setActiveTab("login")}
+            onClick={() => {
+              setActiveTab("login");
+              setError("");
+            }}
           >
             Login
           </button>
           <button
             type="button"
             style={tabButtonStyle(activeTab === "register")}
-            onClick={() => setActiveTab("register")}
+            onClick={() => {
+              setActiveTab("register");
+              setError("");
+            }}
           >
             Register
           </button>
         </div>
+
+        {error && (
+          <div style={{ fontSize: 12, color: colors.red, marginBottom: 12 }}>
+            {error}
+          </div>
+        )}
 
         {/* Login form */}
         {activeTab === "login" && (
@@ -183,8 +221,8 @@ export default function Login() {
               onChange={(e) => setLoginPassword(e.target.value)}
             />
 
-            <button type="submit" style={submitButtonStyle}>
-              Sign In
+            <button type="submit" disabled={isSubmitting} style={submitButtonStyle}>
+              {isSubmitting ? "Signing In..." : "Sign In"}
             </button>
           </form>
         )}
@@ -228,8 +266,8 @@ export default function Login() {
               onChange={(e) => setRegisterConfirm(e.target.value)}
             />
 
-            <button type="submit" style={submitButtonStyle}>
-              Sign In
+            <button type="submit" disabled={isSubmitting} style={submitButtonStyle}>
+              {isSubmitting ? "Creating account..." : "Sign Up"}
             </button>
           </form>
         )}

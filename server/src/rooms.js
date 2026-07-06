@@ -13,12 +13,14 @@ function generateRoomCode() {
   return code;
 }
 
-export function createRoom({ hostSocketId, quiz }) {
+export function createRoom({ hostSocketId, hostUserId, quizId, quiz }) {
   const code = generateRoomCode();
 
   const room = {
     code,
     hostSocketId,
+    hostUserId,
+    quizId,
     quiz,
     participants: new Map(),
     status: "lobby",
@@ -40,9 +42,10 @@ export function deleteRoom(code) {
   rooms.delete(code);
 }
 
-export function addParticipant(room, socketId, name) {
+export function addParticipant(room, socketId, userId, name) {
   room.participants.set(socketId, {
     id: socketId,
+    userId,
     name,
     score: 0,
     hasAnsweredCurrent: false,
@@ -55,7 +58,7 @@ export function removeParticipant(room, socketId) {
 
 export function getParticipantsList(room) {
   return Array.from(room.participants.values()).map(
-    ({ id, name, score }) => ({ id, name, score })
+    ({ id, userId, name, score }) => ({ id, userId, name, score })
   );
 }
 

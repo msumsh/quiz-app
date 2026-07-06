@@ -10,9 +10,10 @@ export default function ActiveQuestion() {
   const { roomCode, role, shouldStart } = location.state || {};
 
   const [question, setQuestion] = useState(null);
-  const [selected, setSelected] = useState(null);
+  const [selectedIndexes, setSelectedIndexes] = useState([]);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
-  const [correctOptionIndex, setCorrectOptionIndex] = useState(null);
+  const [correctOptionIndexes, setCorrectOptionIndexes] = useState(null);
 
   useEffect(() => {
     if (!roomCode) navigate("/home", { replace: true });
@@ -21,13 +22,14 @@ export default function ActiveQuestion() {
   useEffect(() => {
     const handleQuestionShow = (q) => {
       setQuestion(q);
-      setSelected(null);
-      setCorrectOptionIndex(null);
+      setSelectedIndexes([]);
+      setHasSubmitted(false);
+      setCorrectOptionIndexes(null);
       setTimeLeft(q.timeLimitSeconds);
     };
 
-    const handleQuestionResults = ({ correctOptionIndex }) => {
-      setCorrectOptionIndex(correctOptionIndex);
+    const handleQuestionResults = ({ correctOptionIndexes }) => {
+      setCorrectOptionIndexes(correctOptionIndexes);
     };
 
     const handleQuizFinished = ({ leaderboard }) => {
@@ -55,10 +57,29 @@ export default function ActiveQuestion() {
     return () => clearTimeout(timer);
   }, [question, timeLeft]);
 
-  const handleSelect = (index) => {
-    if (role !== "participant" || selected !== null || correctOptionIndex !== null) return;
-    setSelected(index);
-    socket.emit("player:submit_answer", { roomCode, optionIndex: index });
+  const locked = role !== "participant" || hasSubmitted || correctOptionIndexes !== null;
+
+  const submitAnswer = (indexes) => {
+    setHasSubmitted(true);
+    socket.emit("player:submit_answer", { roomCode, optionIndexes: indexes });
+  };
+
+  const handleSingleSelect = (index) => {
+    if (locked) return;
+    setSelectedIndexes([index]);
+    submitAnswer([index]);
+  };
+
+  const handleToggleOption = (index) => {
+    if (locked) return;
+    setSelectedIndexes((prev) =>
+      prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index]
+    );
+  };
+
+  const handleSubmitMultiple = () => {
+    if (locked || selectedIndexes.length === 0) return;
+    submitAnswer(selectedIndexes);
   };
 
   if (!question) {
@@ -71,6 +92,8 @@ export default function ActiveQuestion() {
       </div>
     );
   }
+
+  const isMultiple = question.answerType === "multiple";
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: colors.bgPage }}>
@@ -114,6 +137,11 @@ export default function ActiveQuestion() {
           {question.text}
         </h1>
 
+        {isMultiple && role === "participant" && correctOptionIndexes === null && (
+          <p style={{ fontSize: 12, color: colors.textGray }}>
+            Select all that apply, then tap Submit
+          </p>
+        )}
         {role === "host" && (
           <p style={{ fontSize: 12, color: colors.textGray }}>
             You're viewing as the organizer — players are answering now.
@@ -130,12 +158,14 @@ export default function ActiveQuestion() {
           }}
         >
           {question.options.map((option, index) => {
-            const isSelected = selected === index;
-            const isRevealedCorrect = correctOptionIndex === index;
+            const isSelected = selectedIndexes.includes(index);
+            const isRevealedCorrect = correctOptionIndexes?.includes(index);
             return (
               <button
                 key={option}
-                onClick={() => handleSelect(index)}
+                onClick={() =>
+                  isMultiple ? handleToggleOption(index) : handleSingleSelect(index)
+                }
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -158,7 +188,7 @@ export default function ActiveQuestion() {
                   style={{
                     width: 14,
                     height: 14,
-                    borderRadius: "50%",
+                    borderRadius: isMultiple ? 3 : "50%",
                     border: `2px solid ${colors.purpleLight}`,
                     backgroundColor: isSelected || isRevealedCorrect ? colors.textWhite : "transparent",
                     flexShrink: 0,
@@ -170,7 +200,27 @@ export default function ActiveQuestion() {
           })}
         </div>
 
-        {correctOptionIndex !== null && (
+        {isMultiple && role === "participant" && correctOptionIndexes === null && (
+          <button
+            onClick={handleSubmitMultiple}
+            disabled={hasSubmitted || selectedIndexes.length === 0}
+            style={{
+              padding: "10px 28px",
+              border: "none",
+              borderRadius: 8,
+              backgroundColor: colors.purple,
+              color: colors.textWhite,
+              fontSize: 14,
+              fontWeight: 700,
+              cursor: hasSubmitted || selectedIndexes.length === 0 ? "not-allowed" : "pointer",
+              opacity: hasSubmitted || selectedIndexes.length === 0 ? 0.5 : 1,
+            }}
+          >
+            {hasSubmitted ? "Submitted" : "Submit"}
+          </button>
+        )}
+
+        {correctOptionIndexes !== null && (
           <p style={{ fontSize: 12, color: colors.textGray }}>
             Next question coming up...
           </p>

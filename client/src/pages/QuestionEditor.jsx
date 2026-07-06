@@ -26,14 +26,15 @@ function makeBlankQuestion() {
 export default function QuestionEditor() {
   const navigate = useNavigate();
   const location = useLocation();
-  const quizMeta = location.state; 
-  
+  const quizMeta = location.state;
+
   useEffect(() => {
     if (!quizMeta) navigate("/create-quiz", { replace: true });
   }, [quizMeta, navigate]);
 
   const [questions, setQuestions] = useState([makeBlankQuestion()]);
   const [activeId, setActiveId] = useState(questions[0].id);
+  const [error, setError] = useState("");
 
   const activeIndex = questions.findIndex((q) => q.id === activeId);
   const activeQuestion = questions[activeIndex];
@@ -82,19 +83,50 @@ export default function QuestionEditor() {
   };
 
   const handleFinish = () => {
+    setError("");
+
+    for (const [index, q] of questions.entries()) {
+      if (!q.text.trim()) {
+        setError(`Question ${index + 1} needs some text`);
+        setActiveId(q.id);
+        return;
+      }
+
+      const filledOptions = q.options.filter((opt) => opt.text.trim());
+      if (filledOptions.length < 2) {
+        setError(`Question ${index + 1} needs at least 2 answer options filled in`);
+        setActiveId(q.id);
+        return;
+      }
+
+      const hasCorrectAnswer = q.options.some(
+        (opt) => opt.text.trim() && q.correctOptionIds.includes(opt.id)
+      );
+      if (!hasCorrectAnswer) {
+        setError(`Question ${index + 1} needs a correct answer selected`);
+        setActiveId(q.id);
+        return;
+      }
+    }
+
     const quiz = {
       title: quizMeta.title,
       category: quizMeta.category,
-      questions: questions.map((q) => ({
-        text: q.text,
-        type: q.type,
-        answerType: q.answerType,
-        options: q.options.map((opt) => opt.text),
-        correctOptionIndex: q.options.findIndex((opt) =>
-          q.correctOptionIds.includes(opt.id)
-        ),
-        timeLimitSeconds: quizMeta.timeLimit,
-      })),
+      questions: questions.map((q) => {
+        const filledOptions = q.options.filter((opt) => opt.text.trim());
+        const correctOptionIndexes = filledOptions
+          .map((opt, i) => (q.correctOptionIds.includes(opt.id) ? i : -1))
+          .filter((i) => i !== -1);
+
+        return {
+          text: q.text.trim(),
+          type: q.type,
+          answerType: q.answerType,
+          options: filledOptions.map((opt) => opt.text.trim()),
+          correctOptionIndexes,
+          timeLimitSeconds: quizMeta.timeLimit,
+        };
+      }),
     };
 
     navigate("/lobby", { state: { quiz } });
@@ -295,6 +327,10 @@ export default function QuestionEditor() {
               </div>
             ))}
           </div>
+
+          {error && (
+            <div style={{ fontSize: 12, color: colors.red }}>{error}</div>
+          )}
 
           <button onClick={handleFinish} style={submitButtonStyle}>
             {activeIndex === questions.length - 1

@@ -1,4 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider, useAuth } from "./AuthContext";
+import ErrorBoundary from "./ErrorBoundary";
 
 import Login from "./pages/Login.jsx";
 import Home from "./pages/Home.jsx";
@@ -9,32 +11,94 @@ import JoinQuiz from "./pages/JoinQuiz.jsx";
 import ActiveQuestion from "./pages/ActiveQuestion.jsx";
 import Leaderboard from "./pages/Leaderboard.jsx";
 
+function RequireAuth({ children }) {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) return null;
+  if (!user) return <Navigate to="/login" replace />;
+
+  return children;
+}
+
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* Redirect the root path straight to the login page */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
+    <ErrorBoundary>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="/login" element={<Login />} />
 
-        <Route path="/login" element={<Login />} />
-        <Route path="/home" element={<Home />} />
+            <Route
+              path="/home"
+              element={
+                <RequireAuth>
+                  <Home />
+                </RequireAuth>
+              }
+            />
 
-        {/* Organizer flow: create a quiz, add questions, open the lobby */}
-        <Route path="/create-quiz" element={<CreateQuiz />} />
-        <Route path="/create-quiz/questions" element={<QuestionEditor />} />
-        <Route path="/lobby" element={<HostLobby />} />
+            {/* Organizer flow: create a quiz, add questions, open the lobby.
+                Anyone logged in can enter this flow — choosing "Create Quiz" in
+                the lobby (Home) is what makes them the organizer for that quiz. */}
+            <Route
+              path="/create-quiz"
+              element={
+                <RequireAuth>
+                  <CreateQuiz />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/create-quiz/questions"
+              element={
+                <RequireAuth>
+                  <QuestionEditor />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/lobby"
+              element={
+                <RequireAuth>
+                  <HostLobby />
+                </RequireAuth>
+              }
+            />
 
-        {/* Participant flow: join with a room code */}
-        <Route path="/join" element={<JoinQuiz />} />
+            {/* Participant flow: join with a room code */}
+            <Route
+              path="/join"
+              element={
+                <RequireAuth>
+                  <JoinQuiz />
+                </RequireAuth>
+              }
+            />
 
-        {/* Shared once the quiz is running */}
-        <Route path="/quiz/active" element={<ActiveQuestion />} />
-        <Route path="/leaderboard" element={<Leaderboard />} />
+            {/* Shared once the quiz is running */}
+            <Route
+              path="/quiz/active"
+              element={
+                <RequireAuth>
+                  <ActiveQuestion />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/leaderboard"
+              element={
+                <RequireAuth>
+                  <Leaderboard />
+                </RequireAuth>
+              }
+            />
 
-        {/* Fallback for unknown routes */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
-    </BrowserRouter>
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 

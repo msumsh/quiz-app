@@ -72,11 +72,23 @@ export default function CreateQuiz() {
   const [category, setCategory] = useState("");
   const [numQuestions, setNumQuestions] = useState(10);
   const [timeLimit, setTimeLimit] = useState(30);
+  const [error, setError] = useState("");
 
   const handleNext = (e) => {
     e.preventDefault();
+    setError("");
+
+    if (!title.trim()) {
+      setError("Quiz title is required");
+      return;
+    }
+    if (!category) {
+      setError("Pick a category");
+      return;
+    }
+    
     navigate("/create-quiz/questions", {
-      state: { title, category, numQuestions, timeLimit },
+      state: { title: title.trim(), category, numQuestions, timeLimit },
     });
   };
 
@@ -87,6 +99,7 @@ export default function CreateQuiz() {
       <div style={{ padding: 24, display: "flex", justifyContent: "center" }}>
         <form
           onSubmit={handleNext}
+          noValidate
           style={{
             width: "100%",
             maxWidth: 420,
@@ -98,6 +111,10 @@ export default function CreateQuiz() {
             gap: 18,
           }}
         >
+          {error && (
+            <div style={{ fontSize: 12, color: colors.red }}>{error}</div>
+          )}
+
           <div>
             <label
               style={{
@@ -113,7 +130,6 @@ export default function CreateQuiz() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Ancient Greece History"
-              required
               style={inputStyle}
             />
           </div>
@@ -132,7 +148,6 @@ export default function CreateQuiz() {
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              required
               style={{ ...inputStyle, color: category ? colors.textWhite : colors.textGray }}
             >
               <option value="" disabled>

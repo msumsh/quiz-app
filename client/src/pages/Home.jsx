@@ -1,13 +1,9 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import colors from "../theme";
-
-const recentQuizzes = [
-  { id: 4, title: "Quiz 4", date: "July 01, 2026", score: "9/10" },
-  { id: 3, title: "Quiz 3", date: "March 27, 2026", score: "6/10" },
-  { id: 2, title: "Quiz 2", date: "December 14, 2025", score: "8/10" },
-  { id: 1, title: "Quiz 1", date: "November 02, 2025", score: "4/10" },
-];
+import { useAuth } from "../AuthContext";
+import { historyRequest } from "../api";
 
 function ActionCard({ icon, title, subtitle, onClick }) {
   return (
@@ -51,15 +47,35 @@ function ActionCard({ icon, title, subtitle, onClick }) {
   );
 }
 
+function formatDate(isoString) {
+  return new Date(isoString).toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "long",
+    day: "2-digit",
+  });
+}
+
 export default function Home() {
   const navigate = useNavigate();
+  const { token } = useAuth();
+  const [history, setHistory] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    historyRequest(token)
+      .then(({ history }) => setHistory(history))
+      .catch(() => setError("Could not load your quiz history"))
+      .finally(() => setIsLoading(false));
+  }, [token]);
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: colors.bgPage }}>
       <Navbar />
 
       <div style={{ padding: 24, maxWidth: 900, margin: "0 auto" }}>
-        {/* Create / Join cards */}
+        {/* Create / Join cards — every account can do either; picking one here is what
+            makes you the organizer (Create Quiz) or a participant (Join Quiz) for that quiz */}
         <div style={{ display: "flex", gap: 16, marginBottom: 32 }}>
           <ActionCard
             icon="+"
@@ -75,7 +91,7 @@ export default function Home() {
           />
         </div>
 
-        {/* Recent quizzes */}
+        {/* Recent quizzes — now real data from Postgres via /history */}
         <h2
           style={{
             fontSize: 14,
@@ -87,6 +103,18 @@ export default function Home() {
           Recent Quizzes
         </h2>
 
+        {isLoading && (
+          <p style={{ fontSize: 13, color: colors.textGray }}>Loading...</p>
+        )}
+        {error && (
+          <p style={{ fontSize: 13, color: colors.red }}>{error}</p>
+        )}
+        {!isLoading && !error && history.length === 0 && (
+          <p style={{ fontSize: 13, color: colors.textGray }}>
+            No quizzes yet — create one or join a room to get started.
+          </p>
+        )}
+
         <div
           style={{
             display: "grid",
@@ -94,9 +122,9 @@ export default function Home() {
             gap: 12,
           }}
         >
-          {recentQuizzes.map((quiz) => (
+          {history.map((entry) => (
             <div
-              key={quiz.id}
+              key={entry.sessionId}
               style={{
                 backgroundColor: colors.bgCard,
                 borderRadius: 10,
@@ -106,15 +134,20 @@ export default function Home() {
               <div
                 style={{ fontSize: 13, fontWeight: 700, color: colors.textWhite }}
               >
-                {quiz.title}
+                {entry.title}
               </div>
-              <div style={{ fontSize: 11, color: colors.textGray, margin: "4px 0 10px" }}>
-                {quiz.date}
+              <div style={{ fontSize: 11, color: colors.textGray, margin: "4px 0 6px" }}>
+                {formatDate(entry.finishedAt)}
+              </div>
+              <div style={{ fontSize: 11, color: colors.textGray, marginBottom: 8 }}>
+                {entry.role === "organizer" ? "You hosted this" : "You played this"}
               </div>
               <div
                 style={{ fontSize: 13, fontWeight: 700, color: colors.purpleLight }}
               >
-                {quiz.score}
+                {entry.role === "organizer"
+                  ? `${entry.participantCount} player${entry.participantCount === 1 ? "" : "s"}`
+                  : `${entry.score} pts`}
               </div>
             </div>
           ))}

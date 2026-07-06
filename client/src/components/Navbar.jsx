@@ -1,11 +1,13 @@
 import { useNavigate } from "react-router-dom";
 import colors from "../theme";
+import { useAuth } from "../AuthContext";
 
 export default function Navbar() {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
   const handleLogout = () => {
-    // TODO: clear auth session once backend is connected
+    logout();
     navigate("/login");
   };
 
@@ -32,6 +34,9 @@ export default function Navbar() {
       </span>
 
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        {user && (
+          <span style={{ fontSize: 13, color: colors.textGray }}>{user.name}</span>
+        )}
         <div
           style={{
             width: 28,

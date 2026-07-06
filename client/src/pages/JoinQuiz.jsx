@@ -3,13 +3,15 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import colors from "../theme";
 import { socket } from "../socket";
+import { useAuth } from "../AuthContext";
 
 const CODE_LENGTH = 6;
 
 export default function JoinQuiz() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [code, setCode] = useState("");
-  const [name, setName] = useState("");
+  const [name, setName] = useState(user?.name || "");
   const [error, setError] = useState("");
   const [isJoining, setIsJoining] = useState(false);
 
