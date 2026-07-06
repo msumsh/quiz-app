@@ -3,7 +3,9 @@ import { useNavigate, useLocation } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import colors from "../theme";
 
-const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+const MAX_IMAGE_DIMENSION = 1280;
+const JPEG_QUALITY = 0.85;
 
 let nextQuestionId = 1;
 let nextOptionId = 1;
@@ -26,6 +28,33 @@ function makeBlankQuestion() {
   };
 }
 
+function normalizeImageToJpeg(file) {
+  return new Promise((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(file);
+    const img = new Image();
+
+    img.onload = () => {
+      const scale = Math.min(1, MAX_IMAGE_DIMENSION / Math.max(img.width, img.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      URL.revokeObjectURL(objectUrl);
+      resolve(canvas.toDataURL("image/jpeg", JPEG_QUALITY));
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("This image format isn't supported — try a JPEG or PNG file"));
+    };
+
+    img.src = objectUrl;
+  });
+}
+
 export default function QuestionEditor() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -38,6 +67,7 @@ export default function QuestionEditor() {
   const [questions, setQuestions] = useState([makeBlankQuestion()]);
   const [activeId, setActiveId] = useState(questions[0].id);
   const [error, setError] = useState("");
+  const [isProcessingImage, setIsProcessingImage] = useState(false);
 
   const activeIndex = questions.findIndex((q) => q.id === activeId);
   const activeQuestion = questions[activeIndex];
@@ -48,22 +78,26 @@ export default function QuestionEditor() {
     );
   };
 
-  const handleImageSelect = (file) => {
+  const handleImageSelect = async (file) => {
     if (!file) {
       updateActiveQuestion({ imageUrl: null, imageName: "" });
       return;
     }
     if (file.size > MAX_IMAGE_BYTES) {
-      setError("Image is too large — please use one under 2MB");
+      setError("Image is too large — please use one under 8MB");
       return;
     }
-    setError("");
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      updateActiveQuestion({ imageUrl: reader.result, imageName: file.name });
-    };
-    reader.readAsDataURL(file);
+    setError("");
+    setIsProcessingImage(true);
+    try {
+      const dataUrl = await normalizeImageToJpeg(file);
+      updateActiveQuestion({ imageUrl: dataUrl, imageName: file.name });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsProcessingImage(false);
+    }
   };
 
   const updateOption = (optionId, text) => {
@@ -282,7 +316,9 @@ export default function QuestionEditor() {
                 cursor: "pointer",
               }}
             >
-              {activeQuestion.imageUrl ? (
+              {isProcessingImage ? (
+                "Processing image..."
+              ) : activeQuestion.imageUrl ? (
                 <img
                   src={activeQuestion.imageUrl}
                   alt={activeQuestion.imageName}
@@ -366,7 +402,11 @@ export default function QuestionEditor() {
             <div style={{ fontSize: 12, color: colors.red }}>{error}</div>
           )}
 
-          <button onClick={handleFinish} style={submitButtonStyle}>
+          <button
+            onClick={handleFinish}
+            disabled={isProcessingImage}
+            style={{ ...submitButtonStyle, opacity: isProcessingImage ? 0.6 : 1 }}
+          >
             {activeIndex === questions.length - 1
               ? "Create Lobby"
               : "Next Question"}

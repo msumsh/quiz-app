@@ -1,6 +1,6 @@
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const IMAGE_DATA_URL_REGEX = /^data:image\/(png|jpe?g|gif|webp);base64,/;
-const MAX_IMAGE_DATA_URL_LENGTH = 3_500_000;
+const IMAGE_DATA_URL_REGEX = /^data:image\/(png|jpe?g|webp);base64,/;
+const MAX_IMAGE_DATA_URL_LENGTH = 6_000_000;
 
 export function normalizeEmail(email) {
   return typeof email === "string" ? email.trim().toLowerCase() : "";
@@ -107,7 +107,7 @@ export function validateQuizPayload(quiz) {
         return { error: `Question ${index + 1} needs an image` };
       }
       if (q.imageUrl.length > MAX_IMAGE_DATA_URL_LENGTH) {
-        return { error: `Question ${index + 1} image is too large (max 2MB)` };
+        return { error: `Question ${index + 1} image is too large` };
       }
       imageUrl = q.imageUrl;
     }
