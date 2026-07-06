@@ -28,3 +28,14 @@ and answer questions in real time from their own devices. Leaderboard is shown a
   created it
 - `quiz_sessions` — a completed run of a quiz: room code, host, and the final
   list of participants with their scores (used to build each user's history)
+
+  **Main scenarios**
+  1. Registration/Login
+  2. Quiz and lobby creation
+  3. Connecting participants by code
+  4. Quiz start and timer questions display
+  5. Final leaderboard, saving to history
+
+  **Product**
+  `https://quizzly-client-0lmf.onrender.com`
+

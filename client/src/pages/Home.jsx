@@ -74,8 +74,6 @@ export default function Home() {
       <Navbar />
 
       <div style={{ padding: 24, maxWidth: 900, margin: "0 auto" }}>
-        {/* Create / Join cards — every account can do either; picking one here is what
-            makes you the organizer (Create Quiz) or a participant (Join Quiz) for that quiz */}
         <div style={{ display: "flex", gap: 16, marginBottom: 32 }}>
           <ActionCard
             icon="+"
@@ -91,7 +89,6 @@ export default function Home() {
           />
         </div>
 
-        {/* Recent quizzes — now real data from Postgres via /history */}
         <h2
           style={{
             fontSize: 14,

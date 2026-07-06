@@ -89,7 +89,6 @@ export default function Leaderboard() {
           ))}
         </div>
 
-        {/* Full ranking list */}
         <div
           style={{
             width: "100%",

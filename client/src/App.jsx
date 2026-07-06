@@ -38,9 +38,6 @@ function App() {
               }
             />
 
-            {/* Organizer flow: create a quiz, add questions, open the lobby.
-                Anyone logged in can enter this flow — choosing "Create Quiz" in
-                the lobby (Home) is what makes them the organizer for that quiz. */}
             <Route
               path="/create-quiz"
               element={
@@ -66,7 +63,6 @@ function App() {
               }
             />
 
-            {/* Participant flow: join with a room code */}
             <Route
               path="/join"
               element={
@@ -76,7 +72,6 @@ function App() {
               }
             />
 
-            {/* Shared once the quiz is running */}
             <Route
               path="/quiz/active"
               element={

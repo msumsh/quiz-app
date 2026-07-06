@@ -145,7 +145,6 @@ export default function QuestionEditor() {
           margin: "0 auto",
         }}
       >
-        {/* Sidebar: question list */}
         <div
           style={{
             width: 220,
@@ -207,7 +206,6 @@ export default function QuestionEditor() {
           </div>
         </div>
 
-        {/* Question builder */}
         <div
           style={{
             flex: 1,
@@ -226,7 +224,6 @@ export default function QuestionEditor() {
             style={inputStyle}
           />
 
-          {/* Text / Image toggle */}
           <div style={switchContainerStyle}>
             <button
               onClick={() => updateActiveQuestion({ type: "text" })}
@@ -266,7 +263,6 @@ export default function QuestionEditor() {
             </label>
           )}
 
-          {/* Single Choice / Multiple Choice toggle */}
           <div>
             <div style={switchContainerStyle}>
               <button

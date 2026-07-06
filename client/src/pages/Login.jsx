@@ -1,19 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext";
-
-const colors = {
-  bgPage: "#0d0d0d",
-  bgCard: "#1a1a2e",
-  bgInput: "#232336",
-  borderInput: "#33334a",
-  purple: "#7c3aed",
-  purpleHover: "#6d28d9",
-  purpleLight: "#a78bfa",
-  textWhite: "#ffffff",
-  textGray: "#9a9ab0",
-  red: "#fb7575",
-};
+import colors from "../theme";
 
 function Input({ label, id, type = "text", value, onChange, placeholder }) {
   return (
@@ -138,7 +126,6 @@ export default function Login() {
         fontFamily: "'Segoe UI', Arial, sans-serif",
       }}
     >
-      {/* Logo */}
       <h1
         style={{
           fontSize: 28,
@@ -151,7 +138,6 @@ export default function Login() {
         QUIZZLY
       </h1>
 
-      {/* Auth card */}
       <div
         style={{
           width: "100%",
@@ -161,7 +147,6 @@ export default function Login() {
           padding: 24,
         }}
       >
-        {/* Tab switcher */}
         <div
           style={{
             display: "flex",
@@ -198,7 +183,6 @@ export default function Login() {
           </div>
         )}
 
-        {/* Login form */}
         {activeTab === "login" && (
           <form
             onSubmit={handleLoginSubmit}
@@ -227,7 +211,6 @@ export default function Login() {
           </form>
         )}
 
-        {/* Register form */}
         {activeTab === "register" && (
           <form
             onSubmit={handleRegisterSubmit}
