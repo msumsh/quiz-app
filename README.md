@@ -36,6 +36,6 @@ and answer questions in real time from their own devices. Leaderboard is shown a
   4. Quiz start and timer questions display
   5. Final leaderboard, saving to history
 
-**Product**
-  `https://quizzly-client-0lmf.onrender.com`
+## Product
+[Quizzly Live Demo](https://quizzly-client-0lmf.onrender.com)
 
